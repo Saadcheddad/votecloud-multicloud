@@ -1,0 +1,26 @@
+# Blueprint Render PaaS (PaaS #2 - Offre Always Free)
+services:
+  - type: web
+    name: votecloud-frontend-paas
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: frontend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLOUD_PROVIDER
+        value: Render
+      - key: CLOUD_SERVICE
+        value: Render Web Service (PaaS #2)
+      - key: CLOUD_REGION
+        value: frankfurt
+      - key: AUTH_SERVICE_URL
+        sync: false
+      - key: AUDIT_SERVICE_URL
+        sync: false
+      - key: FAAS_VOTE_URL
+        sync: false

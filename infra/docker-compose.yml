@@ -1,0 +1,115 @@
+# ==============================================================================
+# VoteCloud - Simulation complète en local de l'architecture Multicloud (5 services)
+# Lancer avec : docker compose -f infra/docker-compose.yml up --build
+# ==============================================================================
+services:
+  # Simulation locale de PaaS #1 (Supabase PostgreSQL)
+  postgres:
+    image: postgres:16-alpine
+    container_name: votecloud-paas1-postgres
+    environment:
+      POSTGRES_USER: votecloud
+      POSTGRES_PASSWORD: votecloud_dev_password
+      POSTGRES_DB: votecloud
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./sql/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U votecloud -d votecloud"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Simulation locale de IaaS #2 (AWS EC2 - Audit Hash-Chain & Tally)
+  backend-audit:
+    build:
+      context: ../backend-audit
+    container_name: votecloud-iaas2-aws-ec2
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 3002
+      DATABASE_URL: postgresql://votecloud:votecloud_dev_password@postgres:5432/votecloud
+      DATABASE_SSL: "false"
+      AUDIT_WEBHOOK_SECRET: local-dev-audit-webhook-secret-2026
+      AUDIT_LEDGER_PATH: /app/data/audit-chain.jsonl
+      CLOUD_PROVIDER: "Amazon Web Services (AWS - Local Docker)"
+      CLOUD_SERVICE: "Amazon EC2 t3.micro (IaaS #2)"
+      CLOUD_REGION: "eu-west-3"
+    ports:
+      - "3002:3002"
+    volumes:
+      - audit_ebs_data:/app/data
+
+  # Simulation locale de IaaS #1 (GCP Compute Engine - Auth & Scrutins)
+  backend-auth:
+    build:
+      context: ../backend-auth
+    container_name: votecloud-iaas1-gcp-vm
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend-audit:
+        condition: service_started
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://votecloud:votecloud_dev_password@postgres:5432/votecloud
+      DATABASE_SSL: "false"
+      JWT_SECRET: local-dev-jwt-secret-2026
+      VOTE_HMAC_SECRET: local-dev-vote-hmac-secret-2026
+      AUDIT_WEBHOOK_SECRET: local-dev-audit-webhook-secret-2026
+      AUDIT_SERVICE_URL: http://backend-audit:3002
+      CLOUD_PROVIDER: "Google Cloud Platform (GCP - Local Docker)"
+      CLOUD_SERVICE: "Compute Engine e2-micro (IaaS #1)"
+      CLOUD_REGION: "us-central1-a"
+    ports:
+      - "3001:3001"
+
+  # Simulation locale de FaaS #1 (AWS Lambda - Validation & Enregistrement du Vote)
+  faas-vote:
+    build:
+      context: ../faas-vote
+    container_name: votecloud-faas1-aws-lambda
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend-audit:
+        condition: service_started
+    environment:
+      PORT: 3003
+      DATABASE_URL: postgresql://votecloud:votecloud_dev_password@postgres:5432/votecloud
+      DATABASE_SSL: "false"
+      JWT_SECRET: local-dev-jwt-secret-2026
+      AUDIT_WEBHOOK_SECRET: local-dev-audit-webhook-secret-2026
+      AUDIT_SERVICE_URL: http://backend-audit:3002
+      AWS_REGION: "eu-west-3"
+    ports:
+      - "3003:3003"
+
+  # Simulation locale de PaaS #2 (Render Web Service - Frontend & BFF HTTPS)
+  frontend:
+    build:
+      context: ../frontend
+    container_name: votecloud-paas2-render-ui
+    depends_on:
+      - backend-auth
+      - backend-audit
+      - faas-vote
+    environment:
+      PORT: 3000
+      AUTH_SERVICE_URL: http://backend-auth:3001
+      AUDIT_SERVICE_URL: http://backend-audit:3002
+      FAAS_VOTE_URL: http://faas-vote:3003
+      CLOUD_PROVIDER: "Render (Local Docker)"
+      CLOUD_SERVICE: "Render Web Service (PaaS #2)"
+      CLOUD_REGION: "frankfurt"
+    ports:
+      - "3000:3000"
+
+volumes:
+  pg_data:
+  audit_ebs_data:

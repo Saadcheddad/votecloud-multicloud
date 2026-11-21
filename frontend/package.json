@@ -1,0 +1,15 @@
+{
+  "name": "votecloud-frontend",
+  "version": "1.0.0",
+  "description": "PaaS #2 (Render Web Service) - Portail web citoyen, tableau de bord résultats/audit et passerelle BFF HTTPS multicloud",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "votecloud-multicloud": "file:.."
+  }
+}
