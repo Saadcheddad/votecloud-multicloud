@@ -44,9 +44,9 @@ function createApp(options = {}) {
   const getAuditUrl = () =>
     options.auditServiceUrl !== undefined ? options.auditServiceUrl : process.env.AUDIT_SERVICE_URL;
 
-  const cloudProvider = process.env.CLOUD_PROVIDER || 'Google Cloud Platform (GCP)';
-  const cloudService = process.env.CLOUD_SERVICE || 'Compute Engine e2-micro (IaaS #1)';
-  const cloudRegion = process.env.CLOUD_REGION || process.env.GCP_CLOUD_REGION || 'us-central1-a';
+  const cloudProvider = process.env.CLOUD_PROVIDER || 'Oracle Cloud Infrastructure (OCI)';
+  const cloudService = process.env.CLOUD_SERVICE || 'OCI Compute E2.1.Micro (IaaS #1)';
+  const cloudRegion = process.env.CLOUD_REGION || process.env.OCI_CLOUD_REGION || 'eu-marseille-1';
 
   const app = express();
   app.use(helmet());

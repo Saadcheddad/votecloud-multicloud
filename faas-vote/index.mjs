@@ -392,7 +392,7 @@ export async function handler(event = {}, context = {}) {
       },
       cloudTrace: [
         'PaaS #2 : Render (Portail HTTPS)',
-        'IaaS #1 : GCP Compute Engine (Auth & Jeton anonymisé)',
+        'IaaS #1 : Oracle Cloud OCI (Auth & Jeton anonymisé)',
         `FaaS #1 : AWS Lambda ${region} (Validation & Urne)`,
         'PaaS #1 : Supabase PostgreSQL (Persistance ACID UNIQUE)',
         'IaaS #2 : AWS EC2 (Scellement Hash-Chain SHA-256)',

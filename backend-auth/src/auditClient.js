@@ -18,7 +18,7 @@ async function emitAuditEvent({
   const endpoint = `${auditServiceUrl.replace(/\/$/, '')}/api/audit/events`;
   const payload = {
     eventType,
-    sourceCloud: 'GCP-IaaS',
+    sourceCloud: 'OCI-IaaS',
     electionId,
     actorHash,
     details,
@@ -36,7 +36,7 @@ async function emitAuditEvent({
       headers: {
         'Content-Type': 'application/json',
         'X-Audit-Signature': signature,
-        'X-Source-Cloud': 'GCP-Compute-Engine-IaaS',
+        'X-Source-Cloud': 'OCI-Compute-IaaS',
       },
       body: rawBody,
       signal: controller.signal,

@@ -104,11 +104,11 @@ function createApp(options = {}) {
       services: {
         iaas1_gcp: {
           model: 'IaaS #1',
-          provider: gcpAuth.data?.provider || 'Google Cloud Platform (GCP)',
-          service: gcpAuth.data?.cloudService || 'Compute Engine e2-micro',
+          provider: gcpAuth.data?.provider || 'Oracle Cloud Infrastructure (OCI)',
+          service: gcpAuth.data?.cloudService || 'OCI Compute VM.Standard.E2.1.Micro',
           role: 'Authentification électeurs, gestion scrutins & émission de jetons signés',
           status: gcpAuth.reachable && gcpAuth.data?.status === 'UP' ? 'UP' : 'DOWN',
-          region: gcpAuth.data?.region || 'us-central1-a',
+          region: gcpAuth.data?.region || 'eu-marseille-1',
           hostname: gcpAuth.data?.hostname || '-',
           latencyMs: gcpAuth.latencyMs,
           endpoint: authUrl,
