@@ -1,6 +1,3 @@
-/**
- * Endpoint /api/health pour Vercel Serverless Function (FaaS #1)
- */
 import { handler } from '../index.mjs';
 
 export default async function vercelHealthHandler(req, res) {

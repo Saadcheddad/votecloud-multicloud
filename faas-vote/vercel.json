@@ -1,6 +1,8 @@
 {
+  "outputDirectory": "public",
   "rewrites": [
     { "source": "/health", "destination": "/api/health" },
+    { "source": "/api/vote", "destination": "/api/vote" },
     { "source": "/", "destination": "/api/vote" }
   ]
 }

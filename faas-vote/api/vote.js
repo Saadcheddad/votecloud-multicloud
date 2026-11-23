@@ -1,7 +1,3 @@
-/**
- * Adaptateur Vercel Serverless Function (FaaS #1 - 0 €, sans carte bancaire)
- * Exécute exactement la même logique métier `handler` que faas-vote/index.mjs !
- */
 import { handler } from '../index.mjs';
 
 export default async function vercelVoteHandler(req, res) {
