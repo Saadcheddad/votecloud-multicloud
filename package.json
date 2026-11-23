@@ -2,7 +2,7 @@
   "name": "votecloud-multicloud",
   "version": "1.0.0",
   "private": true,
-  "description": "Plateforme de vote électronique multicloud (2 IaaS: GCP + AWS EC2, 2 PaaS: Supabase + Render, 1 FaaS: AWS Lambda)",
+  "description": "Plateforme de vote électronique multicloud (2 IaaS: Oracle Cloud OCI x2, 2 PaaS: Supabase + Render, 1 FaaS: Vercel Serverless)",
   "scripts": {
     "install:all": "npm --prefix backend-auth install && npm --prefix backend-audit install && npm --prefix faas-vote install && npm --prefix frontend install",
     "db:init": "npm --prefix backend-auth run db:init",
@@ -10,7 +10,6 @@
     "start:audit": "npm --prefix backend-audit start",
     "start:faas": "npm --prefix faas-vote run start:local",
     "start:frontend": "npm --prefix frontend start",
-    "package:lambda": "npm --prefix faas-vote run package",
     "test:e2e": "node tests/e2e-test.mjs",
     "test:local-mock": "node tests/local-integration-test.mjs"
   }

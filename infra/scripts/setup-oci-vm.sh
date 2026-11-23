@@ -43,8 +43,7 @@ if [ ! -f "$BACKEND_DIR/.env" ]; then
 fi
 
 echo "=== [5/7] Configuration du Reverse Proxy Nginx (port 80 -> 127.0.0.1:3001) ==="
-cp "$APP_DIR/infra/nginx/gcp-auth.conf" /etc/nginx/sites-available/votecloud-auth
-sed -i 's/GCP-Compute-Engine-IaaS-Nginx/OCI-Compute-IaaS-Nginx/g' /etc/nginx/sites-available/votecloud-auth
+cp "$APP_DIR/infra/nginx/oci-auth.conf" /etc/nginx/sites-available/votecloud-auth
 ln -sf /etc/nginx/sites-available/votecloud-auth /etc/nginx/sites-enabled/votecloud-auth
 rm -f /etc/nginx/sites-enabled/default
 nginx -t

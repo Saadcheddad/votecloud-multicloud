@@ -68,7 +68,7 @@ VALUES
   (
     '20000000-0000-4000-8000-000000000001',
     'Élection du Bureau des Étudiants ESI — Promo 2027',
-    'Scrutin officiel ouvert pour élire la liste représentative des étudiants en ingénierie Data & Cyberdéfense. Vote unique anonymisé garanti par AWS Lambda + PostgreSQL + Audit Hash-Chain.',
+    'Scrutin officiel ouvert pour élire la liste représentative des étudiants en ingénierie Data & Cyberdéfense. Vote unique anonymisé garanti par Vercel Serverless + Supabase PostgreSQL + Audit Hash-Chain OCI.',
     'OPEN',
     NOW() - INTERVAL '2 days',
     NOW() + INTERVAL '30 days',

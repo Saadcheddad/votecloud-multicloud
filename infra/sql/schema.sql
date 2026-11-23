@@ -7,7 +7,7 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- 1. Table des électeurs et administrateurs (gérée par IaaS #1 - GCP Compute Engine)
+-- 1. Table des électeurs et administrateurs (gérée par IaaS #1 - Oracle Cloud OCI VM #1)
 CREATE TABLE IF NOT EXISTS voters (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     national_id VARCHAR(50) NOT NULL UNIQUE,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS voters (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 2. Table des scrutins (création/gestion par Admin via GCP IaaS #1)
+-- 2. Table des scrutins (création/gestion par Admin via OCI IaaS #1)
 CREATE TABLE IF NOT EXISTS elections (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(200) NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     display_order INT NOT NULL DEFAULT 0
 );
 
--- 4. Urne électronique anonymisée (écrite EXCLUSIVEMENT par FaaS #1 - AWS Lambda)
+-- 4. Urne électronique anonymisée (écrite EXCLUSIVEMENT par FaaS #1 - Vercel Serverless)
 -- Sécurité anti-double vote :
 --   * voter_hash = HMAC-SHA256(VOTE_HMAC_SECRET, election_id + ':' + voter_id)
 --   * Aucune donnée nominative (ni voter_id, ni email, ni CIN) dans cette table
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS votes (
     CONSTRAINT uq_one_vote_per_voter_per_election UNIQUE (election_id, voter_hash)
 );
 
--- 5. Journal d'audit cryptographique chaîné SHA-256 (miroir de IaaS #2 - AWS EC2)
+-- 5. Journal d'audit cryptographique chaîné SHA-256 (miroir de IaaS #2 - Oracle Cloud OCI VM #2)
 CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGSERIAL PRIMARY KEY,
     block_index INT NOT NULL UNIQUE,

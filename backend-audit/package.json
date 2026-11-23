@@ -1,7 +1,7 @@
 {
   "name": "votecloud-backend-audit",
   "version": "1.0.0",
-  "description": "IaaS #2 (AWS EC2) - Nœud indépendant d'audit cryptographique (Hash-Chain SHA-256), dépouillement temps réel et réconciliation inter-cloud",
+  "description": "IaaS #2 (Oracle Cloud OCI VM #2) - Nœud indépendant d'audit cryptographique (Hash-Chain SHA-256), dépouillement temps réel et réconciliation inter-cloud",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

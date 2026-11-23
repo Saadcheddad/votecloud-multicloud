@@ -1,216 +1,153 @@
 # ==============================================================================
-# VoteCloud - Infrastructure-as-Code Multicloud (Terraform)
+# VoteCloud - Infrastructure-as-Code Multicloud (Terraform — Oracle Cloud OCI)
 # Provisionne :
-#   - IaaS #1 : GCP Compute Engine e2-micro (Always Free : us-central1-a, pd-standard)
-#   - IaaS #2 : AWS EC2 t3.micro (Free Tier : eu-west-3, Ubuntu 24.04)
-#   - FaaS #1 : AWS Lambda Node.js 20.x + Function URL HTTPS (Always Free)
-# (PaaS #1 Supabase & PaaS #2 Render sont déployés sans gestion d'OS via Blueprint/Console)
-# ZERO ressource Azure.
+#   - Réseau VCN + Subnet Public + Security List (ports 22, 80, 443 + Egress)
+#   - IaaS #1 : OCI Compute VM #1 (backend-auth, VM.Standard.A1.Flex Always Free)
+#   - IaaS #2 : OCI Compute VM #2 (backend-audit, VM.Standard.A1.Flex Always Free)
+# (PaaS #1 Supabase, PaaS #2 Render et FaaS #1 Vercel sont gérés sans OS via Git/Blueprint)
+# ZERO ressource Azure, AWS ou GCP.
 # ==============================================================================
 
 terraform {
   required_version = ">= 1.6.0"
   required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 5.40"
-    }
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.60"
+    oci = {
+      source  = "oracle/oci"
+      version = "~> 6.0"
     }
   }
 }
 
-provider "google" {
-  project = var.gcp_project_id
-  region  = var.gcp_region
-  zone    = var.gcp_zone
+provider "oci" {
+  region = var.oci_region
 }
 
-provider "aws" {
-  region = var.aws_region
+data "oci_identity_availability_domains" "ads" {
+  compartment_id = var.compartment_ocid
 }
 
-# ==============================================================================
-# 1. IaaS #1 : Google Cloud Compute Engine (Always Free e2-micro)
-# ==============================================================================
-resource "google_compute_firewall" "votecloud_auth_fw" {
-  name    = "votecloud-allow-http-https"
-  network = "default"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["80", "443"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["votecloud-auth"]
-}
-
-resource "google_compute_instance" "gcp_auth_vm" {
-  name         = "votecloud-gcp-auth-iaas"
-  machine_type = "e2-micro" # Eligible GCP Always Free
-  zone         = var.gcp_zone
-  tags         = ["votecloud-auth", "http-server", "https-server"]
-
-  boot_disk {
-    initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2204-lts"
-      size  = 30            # Jusqu'à 30 Go gratuits Always Free
-      type  = "pd-standard" # IMPORTANT : pd-standard est gratuit (pd-balanced est payant !)
-    }
-  }
-
-  network_interface {
-    network = "default"
-    access_config {
-      # IP publique éphémère (standard)
-    }
-  }
-
-  metadata_startup_script = <<-EOT
-    #!/bin/bash
-    apt-get update -y
-    apt-get install -y git curl nginx ufw
-  EOT
-
-  labels = {
-    project = "votecloud"
-    role    = "iaas-1-auth"
-  }
+data "oci_core_images" "ubuntu_2204_arm" {
+  compartment_id           = var.compartment_ocid
+  operating_system         = "Canonical Ubuntu"
+  operating_system_version = "22.04"
+  shape                    = "VM.Standard.A1.Flex"
+  sort_by                  = "TIMECREATED"
+  sort_order               = "DESC"
 }
 
 # ==============================================================================
-# 2. IaaS #2 : Amazon EC2 (Free Tier t3.micro - Ubuntu 24.04)
+# 1. Réseau VCN + Internet Gateway + Security List (Ports 22, 80, 443)
 # ==============================================================================
-data "aws_ami" "ubuntu_2404" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
+resource "oci_core_vcn" "votecloud_vcn" {
+  compartment_id = var.compartment_ocid
+  cidr_block     = "10.0.0.0/16"
+  display_name   = "votecloud-vcn"
+}
 
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
-  }
+resource "oci_core_internet_gateway" "votecloud_igw" {
+  compartment_id = var.compartment_ocid
+  vcn_id         = oci_core_vcn.votecloud_vcn.id
+  display_name   = "votecloud-igw"
+  enabled        = true
+}
 
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
+resource "oci_core_route_table" "votecloud_rt" {
+  compartment_id = var.compartment_ocid
+  vcn_id         = oci_core_vcn.votecloud_vcn.id
+  display_name   = "votecloud-public-rt"
+
+  route_rules {
+    destination       = "0.0.0.0/0"
+    network_entity_id = oci_core_internet_gateway.votecloud_igw.id
   }
 }
 
-resource "aws_security_group" "votecloud_audit_sg" {
-  name        = "votecloud-audit-iaas-sg"
-  description = "Pare-feu reseau pour IaaS #2 (AWS EC2 Audit & Tally Node)"
+resource "oci_core_security_list" "votecloud_seclist" {
+  compartment_id = var.compartment_ocid
+  vcn_id         = oci_core_vcn.votecloud_vcn.id
+  display_name   = "votecloud-public-seclist"
 
-  ingress {
-    description = "SSH administration"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.admin_ssh_cidr]
+  egress_security_rules {
+    protocol    = "all"
+    destination = "0.0.0.0/0"
   }
 
-  ingress {
-    description = "HTTP Reverse Proxy Nginx"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    description = "Acces sortant vers Supabase PaaS et mises a jour"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Project = "VoteCloud"
-    Role    = "IaaS-2-Audit"
-  }
-}
-
-resource "aws_instance" "aws_audit_ec2" {
-  ami                         = data.aws_ami.ubuntu_2404.id
-  instance_type               = var.aws_instance_type
-  key_name                    = var.aws_key_pair_name
-  vpc_security_group_ids      = [aws_security_group.votecloud_audit_sg.id]
-  associate_public_ip_address = true
-
-  root_block_device {
-    volume_size = 16
-    volume_type = "gp3"
-    encrypted   = true
-  }
-
-  tags = {
-    Name    = "votecloud-aws-audit-iaas"
-    Project = "VoteCloud"
-    Role    = "IaaS-2-Audit"
-  }
-}
-
-# ==============================================================================
-# 3. FaaS #1 : AWS Lambda (Node.js 20.x + Function URL HTTPS - Always Free)
-# ==============================================================================
-resource "aws_iam_role" "lambda_exec_role" {
-  name = "votecloud-faas-vote-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "lambda.amazonaws.com"
+  dynamic "ingress_security_rules" {
+    for_each = [22, 80, 443]
+    content {
+      protocol = "6" # TCP
+      source   = "0.0.0.0/0"
+      tcp_options {
+        min = ingress_security_rules.value
+        max = ingress_security_rules.value
       }
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_basic_logs" {
-  role       = aws_iam_role.lambda_exec_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_lambda_function" "faas_vote" {
-  function_name    = "votecloud-faas-vote"
-  role             = aws_iam_role.lambda_exec_role.arn
-  handler          = "index.handler"
-  runtime          = "nodejs20.x"
-  filename         = "${path.module}/../../faas-vote/faas-vote.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../faas-vote/faas-vote.zip")
-  timeout          = 15
-  memory_size      = 256
-
-  environment {
-    variables = {
-      DATABASE_URL         = var.database_url
-      DATABASE_SSL         = "true"
-      JWT_SECRET           = var.jwt_secret
-      AUDIT_WEBHOOK_SECRET = var.audit_webhook_secret
-      AUDIT_SERVICE_URL    = "http://${aws_instance.aws_audit_ec2.public_ip}"
     }
   }
+}
 
-  tags = {
-    Project = "VoteCloud"
-    Role    = "FaaS-1-VoteProcessor"
+resource "oci_core_subnet" "votecloud_subnet" {
+  compartment_id    = var.compartment_ocid
+  vcn_id            = oci_core_vcn.votecloud_vcn.id
+  cidr_block        = "10.0.0.0/24"
+  display_name      = "votecloud-public-subnet"
+  route_table_id    = oci_core_route_table.votecloud_rt.id
+  security_list_ids = [oci_core_security_list.votecloud_seclist.id]
+}
+
+# ==============================================================================
+# 2. IaaS #1 : OCI Compute VM #1 (backend-auth — Always Free A1.Flex)
+# ==============================================================================
+resource "oci_core_instance" "oci_auth_iaas" {
+  compartment_id      = var.compartment_ocid
+  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+  display_name        = "votecloud-oci-auth-iaas"
+  shape               = "VM.Standard.A1.Flex"
+
+  shape_config {
+    ocpus         = 1
+    memory_in_gbs = 6
+  }
+
+  source_details {
+    source_type = "image"
+    source_id   = data.oci_core_images.ubuntu_2204_arm.images[0].id
+  }
+
+  create_vnic_details {
+    subnet_id        = oci_core_subnet.votecloud_subnet.id
+    assign_public_ip = true
+  }
+
+  metadata = {
+    ssh_authorized_keys = var.ssh_public_key
   }
 }
 
-resource "aws_lambda_function_url" "faas_vote_url" {
-  function_name      = aws_lambda_function.faas_vote.function_name
-  authorization_type = "NONE" # Sécurisé applicativement par JWT signé GCP + HMAC
+# ==============================================================================
+# 3. IaaS #2 : OCI Compute VM #2 (backend-audit — Always Free A1.Flex)
+# ==============================================================================
+resource "oci_core_instance" "oci_audit_iaas" {
+  compartment_id      = var.compartment_ocid
+  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+  display_name        = "votecloud-oci-audit-iaas"
+  shape               = "VM.Standard.A1.Flex"
+
+  shape_config {
+    ocpus         = 1
+    memory_in_gbs = 6
+  }
+
+  source_details {
+    source_type = "image"
+    source_id   = data.oci_core_images.ubuntu_2204_arm.images[0].id
+  }
+
+  create_vnic_details {
+    subnet_id        = oci_core_subnet.votecloud_subnet.id
+    assign_public_ip = true
+  }
+
+  metadata = {
+    ssh_authorized_keys = var.ssh_public_key
+  }
 }

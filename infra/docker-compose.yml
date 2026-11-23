@@ -1,5 +1,6 @@
 # ==============================================================================
 # VoteCloud - Simulation complète en local de l'architecture Multicloud (5 services)
+# 2 IaaS (OCI x2) + 2 PaaS (Supabase + Render) + 1 FaaS (Vercel Serverless)
 # Lancer avec : docker compose -f infra/docker-compose.yml up --build
 # ==============================================================================
 services:
@@ -23,11 +24,11 @@ services:
       timeout: 5s
       retries: 10
 
-  # Simulation locale de IaaS #2 (AWS EC2 - Audit Hash-Chain & Tally)
+  # Simulation locale de IaaS #2 (Oracle Cloud OCI VM #2 - Audit Hash-Chain & Tally)
   backend-audit:
     build:
       context: ../backend-audit
-    container_name: votecloud-iaas2-aws-ec2
+    container_name: votecloud-iaas2-oci-audit
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,19 +38,19 @@ services:
       DATABASE_SSL: "false"
       AUDIT_WEBHOOK_SECRET: local-dev-audit-webhook-secret-2026
       AUDIT_LEDGER_PATH: /app/data/audit-chain.jsonl
-      CLOUD_PROVIDER: "Amazon Web Services (AWS - Local Docker)"
-      CLOUD_SERVICE: "Amazon EC2 t3.micro (IaaS #2)"
-      CLOUD_REGION: "eu-west-3"
+      CLOUD_PROVIDER: "Oracle Cloud Infrastructure (OCI - Local Docker)"
+      CLOUD_SERVICE: "OCI Compute Audit Node (IaaS #2)"
+      CLOUD_REGION: "af-casablanca-1"
     ports:
       - "3002:3002"
     volumes:
-      - audit_ebs_data:/app/data
+      - audit_local_data:/app/data
 
-  # Simulation locale de IaaS #1 (GCP Compute Engine - Auth & Scrutins)
+  # Simulation locale de IaaS #1 (Oracle Cloud OCI VM #1 - Auth & Scrutins)
   backend-auth:
     build:
       context: ../backend-auth
-    container_name: votecloud-iaas1-gcp-vm
+    container_name: votecloud-iaas1-oci-auth
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,17 +64,17 @@ services:
       VOTE_HMAC_SECRET: local-dev-vote-hmac-secret-2026
       AUDIT_WEBHOOK_SECRET: local-dev-audit-webhook-secret-2026
       AUDIT_SERVICE_URL: http://backend-audit:3002
-      CLOUD_PROVIDER: "Google Cloud Platform (GCP - Local Docker)"
-      CLOUD_SERVICE: "Compute Engine e2-micro (IaaS #1)"
-      CLOUD_REGION: "us-central1-a"
+      CLOUD_PROVIDER: "Oracle Cloud Infrastructure (OCI - Local Docker)"
+      CLOUD_SERVICE: "OCI Compute Auth Node (IaaS #1)"
+      CLOUD_REGION: "af-casablanca-1"
     ports:
       - "3001:3001"
 
-  # Simulation locale de FaaS #1 (AWS Lambda - Validation & Enregistrement du Vote)
+  # Simulation locale de FaaS #1 (Vercel Serverless Functions - Validation & Enregistrement du Vote)
   faas-vote:
     build:
       context: ../faas-vote
-    container_name: votecloud-faas1-aws-lambda
+    container_name: votecloud-faas1-vercel
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,7 +87,7 @@ services:
       JWT_SECRET: local-dev-jwt-secret-2026
       AUDIT_WEBHOOK_SECRET: local-dev-audit-webhook-secret-2026
       AUDIT_SERVICE_URL: http://backend-audit:3002
-      AWS_REGION: "eu-west-3"
+      VERCEL_REGION: "cdg1"
     ports:
       - "3003:3003"
 
@@ -112,4 +113,4 @@ services:
 
 volumes:
   pg_data:
-  audit_ebs_data:
+  audit_local_data:

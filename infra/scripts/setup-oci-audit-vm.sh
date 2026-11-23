@@ -43,8 +43,7 @@ if [ ! -f "$AUDIT_DIR/.env" ]; then
 fi
 
 echo "=== [5/6] Configuration du Reverse Proxy Nginx (port 80 -> 127.0.0.1:3002) ==="
-cp "$APP_DIR/infra/nginx/aws-audit.conf" /etc/nginx/sites-available/votecloud-audit
-sed -i 's/AWS-EC2-IaaS-Nginx/OCI-Audit-IaaS-Nginx/g' /etc/nginx/sites-available/votecloud-audit
+cp "$APP_DIR/infra/nginx/oci-audit.conf" /etc/nginx/sites-available/votecloud-audit
 ln -sf /etc/nginx/sites-available/votecloud-audit /etc/nginx/sites-enabled/votecloud-audit
 rm -f /etc/nginx/sites-enabled/default
 nginx -t

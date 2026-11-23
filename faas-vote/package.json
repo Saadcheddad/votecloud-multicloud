@@ -2,11 +2,10 @@
   "name": "votecloud-faas-vote",
   "version": "1.0.0",
   "type": "module",
-  "description": "FaaS #1 (AWS Lambda) - Fonction serverless événementielle de validation et d'enregistrement atomique du vote",
+  "description": "FaaS #1 (Vercel Serverless Functions) - Fonction serverless événementielle de validation et d'enregistrement atomique du vote",
   "main": "index.mjs",
   "scripts": {
-    "start:local": "node local-server.mjs",
-    "package": "node scripts/package-lambda.mjs"
+    "start:local": "node local-server.mjs"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

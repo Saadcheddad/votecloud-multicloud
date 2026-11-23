@@ -1,7 +1,7 @@
 {
   "name": "votecloud-backend-auth",
   "version": "1.0.0",
-  "description": "IaaS #1 (GCP Compute Engine) - Service d'authentification, gestion des scrutins et émission des jetons de vote anonymisés",
+  "description": "IaaS #1 (Oracle Cloud OCI VM #1) - Service d'authentification, gestion des scrutins et émission des jetons de vote anonymisés",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
