@@ -60,7 +60,7 @@ export async function runE2E(targetBaseUrl = BASE_URL) {
   assert.equal(reg.status, 201, `Register attendu 201, reçu ${reg.status}: ${JSON.stringify(reg.data)}`);
   assert.ok(reg.data.accessToken, 'accessToken JWT doit être retourné');
   const jwtToken = reg.data.accessToken;
-  console.log(`✅ [2/8] Inscription & JWT GCP IaaS #1 OK (${testUser.email})`);
+  console.log(`✅ [2/8] Inscription & JWT OCI IaaS #1 OK (${testUser.email})`);
 
   // 3. Récupération des 3 scrutins (OPEN, CLOSED, UPCOMING)
   const elecResp = await call('/api/elections', {
@@ -101,7 +101,7 @@ export async function runE2E(targetBaseUrl = BASE_URL) {
   assert.ok(validVote.data.receipt?.receiptCode, 'Reçu cryptographique attendu');
   assert.ok(validVote.data.receipt?.auditBlockIndex, 'Bloc d\'audit AWS EC2 attendu');
   const receiptCode = validVote.data.receipt.receiptCode;
-  console.log(`✅ [4/8] Scénario 1 — Vote valide accepté par AWS Lambda (Reçu: ${receiptCode}, Bloc AWS EC2 #${validVote.data.receipt.auditBlockIndex})`);
+  console.log(`✅ [4/8] Scénario 1 — Vote valide accepté par Vercel FaaS (Reçu: ${receiptCode}, Bloc OCI Audit #${validVote.data.receipt.auditBlockIndex})`);
 
   // 5. Scénario 2 : Tentative de Double Vote -> doit retourner HTTP 409
   const secondToken = await getVoteToken(openElection.id);
@@ -115,7 +115,7 @@ export async function runE2E(targetBaseUrl = BASE_URL) {
   });
   assert.equal(doubleVote.status, 409, `Double vote attendu 409, reçu ${doubleVote.status}`);
   assert.equal(doubleVote.data.error, 'DOUBLE_VOTE_DETECTED');
-  console.log(`✅ [5/8] Scénario 2 — Double vote bloqué (HTTP 409 DOUBLE_VOTE_DETECTED, Bloc AWS EC2 #${doubleVote.data.auditBlockIndex})`);
+  console.log(`✅ [5/8] Scénario 2 — Double vote bloqué (HTTP 409 DOUBLE_VOTE_DETECTED, Bloc OCI Audit #${doubleVote.data.auditBlockIndex})`);
 
   // 6. Scénario 3 : Vote Hors Période (CLOSED + UPCOMING) -> doivent retourner HTTP 403
   const closedToken = await getVoteToken(closedElection.id);

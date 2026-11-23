@@ -3,65 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VoteCloud — Plateforme d'Élection Multicloud Sécurisée</title>
+  <title>VoteCloud — Portail Électoral Multicloud</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <div class="app-shell">
-    <!-- En-tête + Barre de statut des 5 services Cloud -->
+    <!-- En-tête institutionnel -->
     <header class="topbar">
       <div class="brand">
-        <div class="brand-logo" aria-hidden="true">✓</div>
+        <div class="brand-mark" aria-hidden="true">VC</div>
         <div>
-          <h1>VoteCloud <span class="badge-pill">Multicloud · 0 Azure</span></h1>
-          <p class="subtitle">2 IaaS (Oracle Cloud OCI ×2) · 2 PaaS (Supabase + Render) · 1 FaaS (Vercel Serverless)</p>
+          <h1>VoteCloud <span class="badge-pill">Multicloud · 4 Providers</span></h1>
+          <p class="subtitle">2 IaaS (Oracle Cloud OCI) · 2 PaaS (Supabase + Render) · 1 FaaS (Vercel Serverless)</p>
         </div>
       </div>
       <div class="user-zone" id="userZone">
-        <span class="user-guest">Non connecté</span>
+        <span class="user-guest">Session visiteur</span>
       </div>
     </header>
 
-    <!-- Bandeau temps réel de santé des 5 services Cloud -->
+    <!-- Bandeau temps réel des 5 services Cloud -->
     <section class="cloud-strip" id="cloudStrip" aria-label="État en temps réel des 5 services cloud">
+      <span class="strip-label">Statut Live</span>
       <div class="cloud-pill" data-service="iaas1_gcp"><span class="dot"></span> <strong>IaaS #1</strong> OCI Auth</div>
       <div class="cloud-pill" data-service="iaas2_aws"><span class="dot"></span> <strong>IaaS #2</strong> OCI Audit</div>
       <div class="cloud-pill" data-service="paas1_supabase"><span class="dot"></span> <strong>PaaS #1</strong> Supabase DB</div>
       <div class="cloud-pill" data-service="paas2_render"><span class="dot"></span> <strong>PaaS #2</strong> Render UI</div>
-      <div class="cloud-pill" data-service="faas1_lambda"><span class="dot"></span> <strong>FaaS #1</strong> Vercel FaaS</div>
-      <button class="btn-ghost btn-xs" id="btnRefreshCloud" title="Actualiser la télémétrie multicloud">↻ Ping 5 Clouds</button>
+      <div class="cloud-pill" data-service="faas1_lambda"><span class="dot"></span> <strong>FaaS #1</strong> Vercel Serverless</div>
+      <button class="btn-secondary btn-xs" id="btnRefreshCloud" style="margin-left:auto;">Actualiser</button>
     </section>
 
-    <!-- Navigation par onglets -->
+    <!-- Navigation -->
     <nav class="tabs" role="tablist">
-      <button class="tab active" data-tab="vote">🗳️ Scrutins &amp; Vote</button>
-      <button class="tab" data-tab="results">📊 Résultats &amp; Reçu</button>
-      <button class="tab" data-tab="audit">🔐 Journal d'Audit (AWS EC2)</button>
-      <button class="tab" data-tab="admin" id="tabAdminBtn">⚙️ Administration</button>
-      <button class="tab" data-tab="topology">☁️ Topologie Multicloud</button>
+      <button class="tab active" data-tab="vote">Scrutins &amp; Vote</button>
+      <button class="tab" data-tab="results">Dépouillement &amp; Reçu</button>
+      <button class="tab" data-tab="audit">Journal d'Audit</button>
+      <button class="tab" data-tab="admin" id="tabAdminBtn">Administration</button>
+      <button class="tab" data-tab="topology">Infrastructure Multicloud</button>
     </nav>
 
-    <!-- Notifications toast -->
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-    <!-- =========================================================
-         ONGLET 1 : SCRUTINS & VOTE
-    ========================================================= -->
+    <!-- ONGLET 1 : SCRUTINS & VOTE -->
     <main class="tab-panel active" id="panel-vote">
-      <!-- Zone d'authentification (affichée si déconnecté) -->
       <section class="card auth-card" id="authSection">
         <div class="auth-header">
           <div>
-            <h2>Authentification Sécurisée <span class="tag-cloud tag-gcp">IaaS #1 · Oracle Cloud OCI</span></h2>
-            <p class="muted">Connectez-vous pour obtenir un jeton cryptographique anonymisé et voter via AWS Lambda.</p>
+            <h2>Authentification Électeur <span class="tag-cloud tag-oci">IaaS #1 · Oracle Cloud OCI</span></h2>
+            <p class="muted">Identifiez-vous pour obtenir un jeton cryptographique anonymisé et soumettre votre bulletin.</p>
           </div>
-          <div class="auth-mode-switch">
+          <div class="btn-group">
             <button class="btn-secondary btn-sm active" id="btnModeLogin">Connexion</button>
             <button class="btn-secondary btn-sm" id="btnModeRegister">Inscription</button>
           </div>
         </div>
 
-        <!-- Connexion -->
         <form id="loginForm" class="form-grid">
           <div class="field">
             <label for="loginEmail">Adresse email</label>
@@ -71,21 +67,19 @@
             <label for="loginPassword">Mot de passe</label>
             <input type="password" id="loginPassword" required placeholder="••••••••" />
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">Se connecter (GCP IaaS)</button>
+          <div>
+            <button type="submit" class="btn-primary">Se connecter</button>
           </div>
         </form>
 
-        <!-- Raccourcis de démonstration pour la soutenance -->
         <div class="demo-chips" id="demoChips">
-          <span class="muted">Comptes démo soutenance :</span>
-          <button type="button" class="chip" data-email="saad@votecloud.ma" data-pass="Vote@2026!">👤 Saad (Électeur)</button>
-          <button type="button" class="chip" data-email="salma@votecloud.ma" data-pass="Vote@2026!">👤 Salma (Électrice)</button>
-          <button type="button" class="chip" data-email="youssef@votecloud.ma" data-pass="Vote@2026!">👤 Youssef (Électeur)</button>
-          <button type="button" class="chip chip-admin" data-email="admin@votecloud.ma" data-pass="Admin@2026!">🛡️ Admin Électoral</button>
+          <span class="muted">Accès rapide démo :</span>
+          <button type="button" class="chip" data-email="saad@votecloud.ma" data-pass="Vote@2026!">Saad (Électeur)</button>
+          <button type="button" class="chip" data-email="salma@votecloud.ma" data-pass="Vote@2026!">Salma (Électrice)</button>
+          <button type="button" class="chip" data-email="youssef@votecloud.ma" data-pass="Vote@2026!">Youssef (Électeur)</button>
+          <button type="button" class="chip chip-admin" data-email="admin@votecloud.ma" data-pass="Admin@2026!">Administrateur</button>
         </div>
 
-        <!-- Inscription -->
         <form id="registerForm" class="form-grid hidden">
           <div class="field">
             <label for="regNationalId">CIN / Identifiant National</label>
@@ -103,66 +97,62 @@
             <label for="regPassword">Mot de passe (8+ caractères)</label>
             <input type="password" id="regPassword" required minlength="8" placeholder="Vote@2026!" />
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">Créer mon compte électeur</button>
+          <div>
+            <button type="submit" class="btn-primary">Créer mon compte</button>
           </div>
         </form>
       </section>
 
-      <!-- Liste des scrutins -->
       <section class="section-header">
         <div>
-          <h2>Scrutins disponibles</h2>
-          <p class="muted">Chaque vote traverse les 5 services : Render PaaS → GCP IaaS → AWS Lambda FaaS → Supabase PaaS → AWS EC2 IaaS.</p>
+          <h2 style="margin:0 0 4px;">Scrutins en cours et archivés</h2>
+          <p class="muted">Chaîne de traitement : Render (PaaS) → OCI Auth (IaaS #1) → Vercel Serverless (FaaS) → Supabase (PaaS) → OCI Audit (IaaS #2).</p>
         </div>
-        <button class="btn-secondary btn-sm" id="btnReloadElections">↻ Actualiser les scrutins</button>
+        <button class="btn-secondary btn-sm" id="btnReloadElections">Actualiser</button>
       </section>
 
       <div id="electionsList" class="elections-grid">
-        <div class="card muted">Chargement des scrutins depuis GCP IaaS + Supabase PaaS...</div>
+        <div class="card muted">Chargement des scrutins...</div>
       </div>
 
-      <!-- Carte du dernier reçu cryptographique obtenu -->
       <section id="receiptBanner" class="card receipt-card hidden">
         <div class="receipt-top">
           <div>
-            <span class="badge-success">✓ BULLETIN ENREGISTRÉ &amp; SCELLÉ</span>
+            <span class="badge-success">BULLETIN ENREGISTRÉ ET SCELLÉ</span>
             <h3>Reçu Cryptographique de Vote</h3>
           </div>
-          <button class="btn-ghost btn-xs" id="btnCloseReceipt">✕</button>
+          <button class="btn-ghost btn-xs" id="btnCloseReceipt">Fermer</button>
         </div>
         <div class="receipt-grid" id="receiptDetails"></div>
         <div class="trace-list" id="receiptTrace"></div>
       </section>
     </main>
 
-    <!-- =========================================================
-         ONGLET 2 : RÉSULTATS TEMPS RÉEL & VÉRIFICATION REÇU
-    ========================================================= -->
+    <!-- ONGLET 2 : DÉPOUILLEMENT & REÇU -->
     <main class="tab-panel" id="panel-results">
       <div class="two-col">
         <section class="card">
           <div class="card-head">
             <div>
-              <h2>Dépouillement en Temps Réel <span class="tag-cloud tag-aws">IaaS #2 · AWS EC2 + Supabase</span></h2>
-              <p class="muted">Calculé en direct avec réconciliation inter-cloud (Urne PaaS vs Registre Audit AWS EC2).</p>
+              <h2>Dépouillement en Temps Réel <span class="tag-cloud tag-oci">IaaS #2 · OCI Audit</span></h2>
+              <p class="muted">Agrégation en direct avec réconciliation inter-cloud (Urne Supabase vs Registre EBS OCI).</p>
             </div>
-            <button class="btn-secondary btn-sm" id="btnRefreshTally">↻ Actualiser</button>
+            <button class="btn-secondary btn-sm" id="btnRefreshTally">Actualiser</button>
           </div>
 
           <div class="field" style="margin-bottom: 16px;">
-            <label for="tallyElectionSelect">Sélectionner un scrutin</label>
+            <label for="tallyElectionSelect">Scrutin sélectionné</label>
             <select id="tallyElectionSelect"></select>
           </div>
 
           <div id="tallyContainer" class="tally-container">
-            <p class="muted">Sélectionnez un scrutin pour afficher le dépouillement.</p>
+            <p class="muted">Sélectionnez un scrutin pour consulter le dépouillement.</p>
           </div>
         </section>
 
         <section class="card">
-          <h2>Vérifier un Reçu de Vote</h2>
-          <p class="muted">Vérifiez qu'un bulletin figure bien dans l'urne <strong>Supabase PaaS</strong> ET dans la chaîne d'audit <strong>AWS EC2</strong>, sans jamais révéler le choix du candidat.</p>
+          <h2>Vérification d'un Reçu</h2>
+          <p class="muted">Vérifiez qu'un bulletin figure dans l'urne <strong>Supabase</strong> et dans le registre SHA-256 d'<strong>OCI Audit</strong>, sans révéler le choix exprimé.</p>
           <form id="receiptVerifyForm" class="inline-form">
             <input type="text" id="receiptCodeInput" placeholder="Ex: VC-A1B2-C3D4" required />
             <button type="submit" class="btn-primary">Vérifier</button>
@@ -172,19 +162,17 @@
       </div>
     </main>
 
-    <!-- =========================================================
-         ONGLET 3 : JOURNAL D'AUDIT & INTÉGRITÉ (AWS EC2 IaaS #2)
-    ========================================================= -->
+    <!-- ONGLET 3 : JOURNAL D'AUDIT -->
     <main class="tab-panel" id="panel-audit">
       <section class="card">
         <div class="card-head">
           <div>
-            <h2>Journal d'Audit Cryptographique Chaîné SHA-256 <span class="tag-cloud tag-aws">IaaS #2 · AWS EC2</span></h2>
-            <p class="muted">Registre immuable stocké sur le volume EBS d'AWS EC2 et répliqué sur Supabase. Toute altération brise la chaîne de hachage.</p>
+            <h2>Journal d'Audit Chaîné SHA-256 <span class="tag-cloud tag-oci">IaaS #2 · Oracle Cloud OCI</span></h2>
+            <p class="muted">Registre append-only stocké sur la VM d'audit OCI et répliqué dans Supabase. Chaque bloc scelle le hash du bloc précédent.</p>
           </div>
           <div class="btn-group">
-            <button class="btn-primary btn-sm" id="btnVerifyChain">🔍 Vérifier l'intégrité SHA-256</button>
-            <button class="btn-secondary btn-sm" id="btnReloadAudit">↻ Actualiser</button>
+            <button class="btn-primary btn-sm" id="btnVerifyChain">Vérifier l'intégrité SHA-256</button>
+            <button class="btn-secondary btn-sm" id="btnReloadAudit">Actualiser</button>
           </div>
         </div>
 
@@ -197,32 +185,30 @@
                 <th>Bloc</th>
                 <th>Horodatage</th>
                 <th>Événement</th>
-                <th>Cloud Source</th>
+                <th>Source</th>
                 <th>Acteur (Hash)</th>
                 <th>Chaînage SHA-256 (prev → block)</th>
                 <th>Détails</th>
               </tr>
             </thead>
             <tbody id="auditTableBody">
-              <tr><td colspan="7" class="muted">Chargement du registre AWS EC2...</td></tr>
+              <tr><td colspan="7" class="muted">Chargement du registre d'audit...</td></tr>
             </tbody>
           </table>
         </div>
       </section>
     </main>
 
-    <!-- =========================================================
-         ONGLET 4 : ADMINISTRATION DES SCRUTINS (GCP IaaS #1)
-    ========================================================= -->
+    <!-- ONGLET 4 : ADMINISTRATION -->
     <main class="tab-panel" id="panel-admin">
       <div id="adminLockNotice" class="card warning-card">
         <h3>Accès Administrateur requis</h3>
-        <p>Connectez-vous avec le compte administrateur (<code>admin@votecloud.ma</code> / <code>Admin@2026!</code>) dans l'onglet <strong>Scrutins &amp; Vote</strong> pour créer un scrutin ou modifier son statut.</p>
+        <p class="muted" style="color:#92400e;">Connectez-vous avec le compte administrateur (<code>admin@votecloud.ma</code> / <code>Admin@2026!</code>) dans l'onglet <strong>Scrutins &amp; Vote</strong> pour gérer les scrutins.</p>
       </div>
 
       <div id="adminWorkspace" class="two-col hidden">
         <section class="card">
-          <h2>Créer un nouveau scrutin <span class="tag-cloud tag-gcp">IaaS #1 · GCP</span></h2>
+          <h2>Créer un scrutin <span class="tag-cloud tag-oci">IaaS #1 · OCI</span></h2>
           <form id="createElectionForm" class="stack-form">
             <div class="field">
               <label for="newTitle">Titre du scrutin</label>
@@ -255,46 +241,44 @@
               <div id="candidateInputs" class="candidate-inputs"></div>
               <button type="button" class="btn-secondary btn-xs" id="btnAddCandidateRow">+ Ajouter un candidat</button>
             </div>
-            <button type="submit" class="btn-primary">Créer le scrutin sur GCP + Supabase</button>
+            <button type="submit" class="btn-primary">Enregistrer le scrutin</button>
           </form>
         </section>
 
         <section class="card">
-          <h2>Gérer les scrutins existants</h2>
-          <p class="muted">Ouvrez ou clôturez un scrutin en direct pendant la soutenance pour démontrer le blocage hors période sur AWS Lambda.</p>
+          <h2>Pilotage des scrutins</h2>
+          <p class="muted">Modifiez le statut d'un scrutin en direct pour démontrer le contrôle temporel côté FaaS.</p>
           <div id="adminElectionsList" class="admin-list"></div>
         </section>
       </div>
     </main>
 
-    <!-- =========================================================
-         ONGLET 5 : TOPOLOGIE MULTICLOUD LIVE
-    ========================================================= -->
+    <!-- ONGLET 5 : INFRASTRUCTURE MULTICLOUD -->
     <main class="tab-panel" id="panel-topology">
       <section class="card">
         <div class="card-head">
           <div>
-            <h2>Supervision Live des 5 Services Multicloud</h2>
-            <p class="muted">Preuve en temps réel de l'interconnexion : 2 IaaS (GCP + AWS EC2), 2 PaaS (Supabase + Render), 1 FaaS (AWS Lambda) — 0 service Azure.</p>
+            <h2>Supervision Live de l'Infrastructure Multicloud</h2>
+            <p class="muted">Sonde en temps réel des 5 services répartis sur 4 fournisseurs (Oracle Cloud OCI, Supabase, Render, Vercel — 0 Azure).</p>
           </div>
-          <button class="btn-primary btn-sm" id="btnRefreshTopology">↻ Lancer un Healthcheck Multicloud</button>
+          <button class="btn-primary btn-sm" id="btnRefreshTopology">Lancer un diagnostic</button>
         </div>
         <div id="topologyGrid" class="topology-grid">
-          <div class="card muted">Interrogation des 5 services cloud en cours...</div>
+          <div class="card muted">Interrogation des 5 services en cours...</div>
         </div>
       </section>
     </main>
 
-    <!-- Modale de confirmation de vote -->
+    <!-- Modale de vote -->
     <div id="voteModal" class="modal hidden" role="dialog" aria-modal="true">
       <div class="modal-backdrop" id="voteModalBackdrop"></div>
       <div class="modal-box">
         <h3 id="modalElectionTitle">Exprimer votre vote</h3>
-        <p class="muted" id="modalElectionHint">Sélectionnez un candidat. Votre bulletin sera anonymisé par GCP IaaS puis validé par AWS Lambda FaaS.</p>
+        <p class="muted" id="modalElectionHint">Sélectionnez un candidat. Votre jeton sera anonymisé par OCI Auth puis validé par Vercel Serverless (FaaS).</p>
         <div id="modalCandidates" class="modal-candidates"></div>
         <div class="modal-footer">
           <button class="btn-secondary" id="btnCancelVote">Annuler</button>
-          <button class="btn-primary" id="btnConfirmVote">Confirmer &amp; Envoyer à AWS Lambda</button>
+          <button class="btn-primary" id="btnConfirmVote">Confirmer mon vote</button>
         </div>
       </div>
     </div>

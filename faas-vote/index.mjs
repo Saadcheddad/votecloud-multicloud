@@ -393,9 +393,9 @@ export async function handler(event = {}, context = {}) {
       cloudTrace: [
         'PaaS #2 : Render (Portail HTTPS)',
         'IaaS #1 : Oracle Cloud OCI (Auth & Jeton anonymisé)',
-        `FaaS #1 : AWS Lambda ${region} (Validation & Urne)`,
+        `FaaS #1 : Vercel Serverless (${region})`,
         'PaaS #1 : Supabase PostgreSQL (Persistance ACID UNIQUE)',
-        'IaaS #2 : AWS EC2 (Scellement Hash-Chain SHA-256)',
+        'IaaS #2 : Oracle Cloud OCI Audit (Scellement Hash-Chain SHA-256)',
       ],
       latencyMs: Date.now() - started,
     });

@@ -65,8 +65,8 @@ function renderAuthState() {
     authSection.classList.add('hidden');
     userZone.innerHTML = `
       <div class="user-badge">
-        <span>${state.user.role === 'admin' ? '🛡️' : '👤'} <strong>${escapeHtml(state.user.fullName)}</strong></span>
-        <span class="muted">(${escapeHtml(state.user.nationalId)})</span>
+        <span><strong>${escapeHtml(state.user.fullName)}</strong></span>
+        <span class="muted">${escapeHtml(state.user.nationalId)} · ${state.user.role === 'admin' ? 'Admin' : 'Électeur'}</span>
       </div>
       <button class="btn-secondary btn-sm" id="btnLogout">Déconnexion</button>
     `;
@@ -139,18 +139,18 @@ function renderElections() {
 
       let actionsHtml = '';
       if (!state.token) {
-        actionsHtml = `<span class="muted">Connectez-vous ci-dessus pour voter.</span>`;
+        actionsHtml = `<span class="muted">Connectez-vous pour voter.</span>`;
       } else if (canVoteNormally) {
-        actionsHtml = `<button class="btn-primary btn-sm" data-action="open-vote" data-id="${e.id}">🗳️ Voter (via AWS Lambda)</button>`;
+        actionsHtml = `<button class="btn-primary btn-sm" data-action="open-vote" data-id="${e.id}">Voter</button>`;
       } else if (e.hasVoted) {
         actionsHtml = `
           <button class="btn-danger btn-sm" data-action="test-double-vote" data-id="${e.id}" data-cand="${firstCandId}">
-            🧪 Tester Double Vote (Doit renvoyer HTTP 409)
+            Simuler double vote (409)
           </button>`;
       } else {
         actionsHtml = `
           <button class="btn-warning btn-sm" data-action="test-out-window" data-id="${e.id}" data-cand="${firstCandId}">
-            🧪 Tester Vote Hors Période (Doit renvoyer HTTP 403)
+            Tester hors période (403)
           </button>`;
       }
 
@@ -164,8 +164,8 @@ function renderElections() {
             <h3>${escapeHtml(e.title)}</h3>
             <p class="muted" style="margin-bottom:10px;">${escapeHtml(e.description)}</p>
             <div class="election-meta">
-              <span>📅 Ouverture : ${formatDate(e.startsAt)}</span>
-              <span>⏳ Clôture : ${formatDate(e.endsAt)}</span>
+              <span>Ouverture : ${formatDate(e.startsAt)}</span>
+              <span>Clôture : ${formatDate(e.endsAt)}</span>
             </div>
             ${receiptHtml}
             <div class="cand-preview" style="margin-top:10px;">
@@ -174,7 +174,7 @@ function renderElections() {
           </div>
           <div class="election-actions">
             ${actionsHtml}
-            <button class="btn-secondary btn-sm" data-action="view-results" data-id="${e.id}">📊 Résultats</button>
+            <button class="btn-secondary btn-sm" data-action="view-results" data-id="${e.id}">Résultats</button>
           </div>
         </article>
       `;
@@ -265,19 +265,19 @@ async function executeVoteFlow(electionId, candidateId, mode = 'normal') {
 
   if (voteResp.ok && voteResp.status === 201) {
     closeVoteModal();
-    showToast('Vote validé par AWS Lambda et scellé dans AWS EC2 !', 'success');
+    showToast('Vote validé par le FaaS Vercel et scellé dans OCI Audit.', 'success');
     renderReceiptBanner(voteResp.data);
     loadElections();
     loadAuditLogs();
   } else if (voteResp.status === 409) {
     showToast(
-      `🛡️ [HTTP 409 - AWS Lambda] ${voteResp.data.message} (Alerte journalisée sur AWS EC2 bloc #${voteResp.data.auditBlockIndex || '?'})`,
+      `[HTTP 409 - FaaS] ${voteResp.data.message} (Alerte journalisée sur OCI Audit bloc #${voteResp.data.auditBlockIndex || '?'})`,
       'error'
     );
     loadAuditLogs();
   } else if (voteResp.status === 403) {
     showToast(
-      `⏳ [HTTP 403 - AWS Lambda] ${voteResp.data.message} (Alerte journalisée sur AWS EC2 bloc #${voteResp.data.auditBlockIndex || '?'})`,
+      `[HTTP 403 - FaaS] ${voteResp.data.message} (Alerte journalisée sur OCI Audit bloc #${voteResp.data.auditBlockIndex || '?'})`,
       'error'
     );
     loadAuditLogs();
@@ -291,8 +291,8 @@ function renderReceiptBanner(payload) {
   $('receiptDetails').innerHTML = `
     <div class="receipt-item"><span>Code Reçu Vérifiable</span><code>${escapeHtml(r.receiptCode)}</code></div>
     <div class="receipt-item"><span>Empreinte SHA-256 du Bulletin</span><code>${escapeHtml(r.receiptHash)}</code></div>
-    <div class="receipt-item"><span>AWS Lambda Request ID (FaaS #1)</span><code>${escapeHtml(r.lambdaRequestId)}</code></div>
-    <div class="receipt-item"><span>Bloc Chaîne d'Audit AWS EC2 (IaaS #2)</span><code>#${escapeHtml(r.auditBlockIndex)} — ${escapeHtml((r.auditBlockHash || '').slice(0, 20))}...</code></div>
+    <div class="receipt-item"><span>Identifiant Invocation FaaS (Vercel)</span><code>${escapeHtml(r.lambdaRequestId)}</code></div>
+    <div class="receipt-item"><span>Bloc Chaîne d'Audit OCI (IaaS #2)</span><code>#${escapeHtml(r.auditBlockIndex)} — ${escapeHtml((r.auditBlockHash || '').slice(0, 20))}...</code></div>
   `;
   $('receiptTrace').innerHTML = (payload.cloudTrace || [])
     .map((step, i) => `<span class="trace-step">${i + 1}. ${escapeHtml(step)}</span>`)
@@ -349,9 +349,9 @@ async function loadTally(electionId) {
     </div>
     ${barsHtml}
     <div class="reconcile-box ${recon.reconciled ? '' : 'warn'}">
-      <strong>${recon.reconciled ? '✅ Réconciliation Inter-Cloud Validée' : '⚠️ Écart détecté entre Clouds'}</strong><br />
+      <strong>${recon.reconciled ? 'Réconciliation Inter-Cloud Validée' : 'Écart détecté entre Clouds'}</strong><br />
       Urne Supabase (PaaS #1) : <strong>${recon.supabaseBallotCount}</strong> bulletin(s) ·
-      Registre indépendant AWS EC2 (IaaS #2) : <strong>${recon.awsEc2AuditCount}</strong> preuve(s) scellée(s).
+      Registre indépendant OCI Audit (IaaS #2) : <strong>${recon.awsEc2AuditCount}</strong> preuve(s) scellée(s).
     </div>
   `;
 }
@@ -380,7 +380,7 @@ async function loadAuditLogs() {
         <td><strong>#${b.blockIndex}</strong></td>
         <td>${formatDate(b.timestamp)}</td>
         <td><span class="ev-badge ev-${escapeHtml(b.eventType)}">${escapeHtml(b.eventType)}</span></td>
-        <td><span class="tag-cloud ${b.sourceCloud.includes('GCP') ? 'tag-gcp' : b.sourceCloud.includes('FaaS') ? 'tag-faas' : 'tag-aws'}">${escapeHtml(b.sourceCloud)}</span></td>
+        <td><span class="tag-cloud ${b.sourceCloud.includes('OCI') || b.sourceCloud.includes('GCP') ? 'tag-oci' : 'tag-vercel'}">${escapeHtml(b.sourceCloud)}</span></td>
         <td class="mono">${escapeHtml(b.actorHash || '-')}</td>
         <td class="mono">${escapeHtml(b.prevHash.slice(0, 10))}… → <strong>${escapeHtml(b.blockHash.slice(0, 14))}…</strong></td>
         <td class="mono" style="color:#cbd5e1;max-width:260px;word-break:break-word;">${escapeHtml(JSON.stringify(b.details))}</td>
@@ -403,14 +403,14 @@ async function verifyAuditChain() {
   if (data.overallValid) {
     banner.classList.add('verify-ok');
     banner.innerHTML = `
-      <strong>✅ CHAÎNE D'AUDIT INTÈGRE (VÉRIFIÉE PAR AWS EC2 IaaS #2)</strong><br />
+      <strong>CHAÎNE D'AUDIT INTÈGRE (VÉRIFIÉE PAR OCI AUDIT IaaS #2)</strong><br />
       Blocs recalculés &amp; validés (SHA-256) : <strong>${data.localEbsLedger.blocksVerified}</strong> ·
       Empreinte sommet (Tip Hash) : <code class="mono">${escapeHtml(data.localEbsLedger.tipHash)}</code><br />
-      Synchronisation AWS EC2 EBS ↔ Supabase PaaS : <strong>${data.crossCloudMirror.awsEc2Blocks} / ${data.crossCloudMirror.supabaseBlocks}</strong>
+      Synchronisation OCI Audit ↔ Supabase PaaS : <strong>${data.crossCloudMirror.awsEc2Blocks} / ${data.crossCloudMirror.supabaseBlocks}</strong>
     `;
   } else {
     banner.classList.add('verify-err');
-    banner.innerHTML = `🚨 <strong>ALTÉRATION DÉTECTÉE :</strong> ${escapeHtml(data.localEbsLedger.reason)}`;
+    banner.innerHTML = `<strong>ALTÉRATION DÉTECTÉE :</strong> ${escapeHtml(data.localEbsLedger.reason)}`;
   }
 }
 
@@ -495,12 +495,12 @@ async function loadTopology() {
             <strong>${escapeHtml(s.model)} · ${escapeHtml(s.provider)}</strong>
             <span class="status-badge ${isUp ? 'status-OPEN' : 'status-CLOSED'}">${isUp ? 'EN LIGNE' : 'HORS LIGNE'}</span>
           </div>
-          <div style="font-weight:600;color:#93c5fd;">${escapeHtml(s.service)}</div>
+          <div style="font-weight:700;color:#0f3d3e;">${escapeHtml(s.service)}</div>
           <p class="muted" style="font-size:0.8rem;">${escapeHtml(s.role)}</p>
           <div class="topo-kv"><span>Région</span><code>${escapeHtml(s.region || '-')}</code></div>
           ${s.hostname ? `<div class="topo-kv"><span>Hôte / Instance</span><code>${escapeHtml(s.hostname)}</code></div>` : ''}
           ${s.version ? `<div class="topo-kv"><span>Moteur DB</span><code>${escapeHtml(s.version)}</code></div>` : ''}
-          ${s.awsRequestId ? `<div class="topo-kv"><span>Lambda Request ID</span><code>${escapeHtml(s.awsRequestId)}</code></div>` : ''}
+          ${s.awsRequestId ? `<div class="topo-kv"><span>ID Invocation FaaS</span><code>${escapeHtml(s.awsRequestId)}</code></div>` : ''}
           ${s.latencyMs !== undefined ? `<div class="topo-kv"><span>Latence sonde</span><code>${s.latencyMs} ms</code></div>` : ''}
           ${s.auditChain ? `<div class="topo-kv"><span>Chaîne d'audit</span><code>${s.auditChain.blocksCount} blocs (${s.auditChain.valid ? 'INTÈGRE' : 'ERREUR'})</code></div>` : ''}
           ${s.counts?.votes !== undefined ? `<div class="topo-kv"><span>Données PaaS</span><code>${s.counts.voters} électeurs · ${s.counts.elections} scrutins · ${s.counts.votes} votes</code></div>` : ''}
@@ -614,11 +614,11 @@ function initEventListeners() {
       const r = resp.data.receipt;
       box.classList.add('verify-ok');
       box.innerHTML = `
-        <strong>✅ Bulletin trouvé &amp; vérifié !</strong><br />
+        <strong>Bulletin trouvé et vérifié</strong><br />
         Scrutin : <strong>${escapeHtml(r.electionTitle)}</strong><br />
         Horodatage : ${formatDate(r.castAt)}<br />
-        AWS Lambda Request ID : <code class="mono">${escapeHtml(r.lambdaRequestId)}</code><br />
-        Présent dans le registre AWS EC2 (IaaS #2) : <strong>${resp.data.verifiedCrossCloud ? `Oui (Bloc #${r.awsAuditBlockIndex})` : 'En cours de synchro'}</strong><br />
+        ID Invocation FaaS (Vercel) : <code class="mono">${escapeHtml(r.lambdaRequestId)}</code><br />
+        Présent dans le registre OCI Audit (IaaS #2) : <strong>${resp.data.verifiedCrossCloud ? `Oui (Bloc #${r.awsAuditBlockIndex})` : 'En cours de synchro'}</strong><br />
         <span class="muted">${escapeHtml(resp.data.note)}</span>
       `;
     } else {
